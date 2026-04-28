@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="komoot-killer-ui-mvp" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>Demo Gravel Loop</name>
+    <trkseg>
+      <trkpt lat="59.9386" lon="30.3141"><ele>12</ele></trkpt>
+      <trkpt lat="59.9440" lon="30.3050"><ele>16</ele></trkpt>
+      <trkpt lat="59.9520" lon="30.2960"><ele>24</ele></trkpt>
+      <trkpt lat="59.9600" lon="30.3100"><ele>32</ele></trkpt>
+      <trkpt lat="59.9560" lon="30.3320"><ele>27</ele></trkpt>
+      <trkpt lat="59.9460" lon="30.3400"><ele>18</ele></trkpt>
+      <trkpt lat="59.9386" lon="30.3141"><ele>12</ele></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
