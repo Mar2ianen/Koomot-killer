@@ -1,23 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 
 import '../data/demo_route.dart';
+import '../models/route_models.dart';
+import '../services/gpx_importer.dart';
 import '../widgets/elevation_profile_card.dart';
 import '../widgets/route_map.dart';
 import '../widgets/route_overview_card.dart';
 import '../widgets/route_segments_card.dart';
 import '../widgets/warnings_card.dart';
 
-class RouteViewerScreen extends StatelessWidget {
+class RouteViewerScreen extends StatefulWidget {
   const RouteViewerScreen({super.key});
+
+  @override
+  State<RouteViewerScreen> createState() => _RouteViewerScreenState();
+}
+
+class _RouteViewerScreenState extends State<RouteViewerScreen> {
+  final MapController _mapController = MapController();
+  RouteAnalysis _route = demoRoute;
+  bool _isImporting = false;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 1000;
-        final mapController = MapController();
 
         return Scaffold(
           appBar: AppBar(
@@ -26,34 +35,87 @@ class RouteViewerScreen extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: FilledButton.icon(
-                  onPressed: () => _showNotImplemented(context),
-                  icon: const Icon(Icons.upload_file_rounded),
-                  label: const Text('Open GPX'),
+                  onPressed: _isImporting ? null : _openGpx,
+                  icon: _isImporting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upload_file_rounded),
+                  label: Text(_isImporting ? 'Loading...' : 'Open GPX'),
                 ),
               ),
             ],
           ),
           body: isWide
-              ? _DesktopRouteViewer(mapController: mapController)
-              : _MobileRouteViewer(mapController: mapController),
+              ? _DesktopRouteViewer(
+                  mapController: _mapController,
+                  route: _route,
+                )
+              : _MobileRouteViewer(
+                  mapController: _mapController,
+                  route: _route,
+                ),
         );
       },
     );
   }
 
-  void _showNotImplemented(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('GPX import is a UI stub. Rust parser comes next.'),
-      ),
-    );
+  Future<void> _openGpx() async {
+    setState(() => _isImporting = true);
+
+    try {
+      final route = await GpxImporter.pickRoute();
+
+      if (!mounted) {
+        return;
+      }
+
+      if (route == null) {
+        return;
+      }
+
+      setState(() => _route = route);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Loaded ${route.name}: ${route.distanceKm.toStringAsFixed(1)} km',
+          ),
+        ),
+      );
+    } on GpxImportException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load GPX: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isImporting = false);
+      }
+    }
   }
 }
 
 class _DesktopRouteViewer extends StatelessWidget {
-  const _DesktopRouteViewer({required this.mapController});
+  const _DesktopRouteViewer({
+    required this.mapController,
+    required this.route,
+  });
 
   final MapController mapController;
+  final RouteAnalysis route;
 
   @override
   Widget build(BuildContext context) {
@@ -88,11 +150,12 @@ class _DesktopRouteViewer extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(28),
+              clipBehavior: Clip.hardEdge,
               child: ColoredBox(
                 color: colorScheme.surfaceContainerLow,
                 child: RouteMap(
                   controller: mapController,
-                  route: demoRoute,
+                  route: route,
                 ),
               ),
             ),
@@ -107,7 +170,7 @@ class _DesktopRouteViewer extends StatelessWidget {
                 left: BorderSide(color: colorScheme.outlineVariant),
               ),
             ),
-            child: const _RouteInspectorPanel(),
+            child: _RouteInspectorPanel(route: route),
           ),
         ),
       ],
@@ -116,21 +179,29 @@ class _DesktopRouteViewer extends StatelessWidget {
 }
 
 class _MobileRouteViewer extends StatelessWidget {
-  const _MobileRouteViewer({required this.mapController});
+  const _MobileRouteViewer({
+    required this.mapController,
+    required this.route,
+  });
 
   final MapController mapController;
+  final RouteAnalysis route;
 
   @override
   Widget build(BuildContext context) {
     return Stack(
+      fit: StackFit.expand,
       children: [
         Positioned.fill(
           child: RouteMap(
             controller: mapController,
-            route: demoRoute,
+            route: route,
           ),
         ),
         DraggableScrollableSheet(
+          expand: false,
+          snap: true,
+          snapSizes: const [0.34, 0.62, 0.86],
           initialChildSize: 0.34,
           minChildSize: 0.18,
           maxChildSize: 0.86,
@@ -150,10 +221,13 @@ class _MobileRouteViewer extends StatelessWidget {
               child: ListView(
                 controller: scrollController,
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-                children: const [
-                  Center(child: _SheetHandle()),
-                  SizedBox(height: 12),
-                  _RouteInspectorPanel(isScrollable: false),
+                children: [
+                  const Center(child: _SheetHandle()),
+                  const SizedBox(height: 12),
+                  _RouteInspectorPanel(
+                    route: route,
+                    isScrollable: false,
+                  ),
                 ],
               ),
             );
@@ -165,20 +239,24 @@ class _MobileRouteViewer extends StatelessWidget {
 }
 
 class _RouteInspectorPanel extends StatelessWidget {
-  const _RouteInspectorPanel({this.isScrollable = true});
+  const _RouteInspectorPanel({
+    required this.route,
+    this.isScrollable = true,
+  });
 
+  final RouteAnalysis route;
   final bool isScrollable;
 
   @override
   Widget build(BuildContext context) {
     final content = <Widget>[
-      RouteOverviewCard(route: demoRoute),
+      RouteOverviewCard(route: route),
       const SizedBox(height: 16),
-      ElevationProfileCard(route: demoRoute),
+      ElevationProfileCard(route: route),
       const SizedBox(height: 16),
-      RouteSegmentsCard(route: demoRoute),
+      RouteSegmentsCard(route: route),
       const SizedBox(height: 16),
-      WarningsCard(route: demoRoute),
+      WarningsCard(route: route),
     ];
 
     if (!isScrollable) {

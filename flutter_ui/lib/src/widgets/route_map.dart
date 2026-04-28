@@ -1,10 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../models/route_models.dart';
 
-class RouteMap extends StatelessWidget {
+class RouteMap extends StatefulWidget {
   const RouteMap({
     required this.controller,
     required this.route,
@@ -15,77 +17,139 @@ class RouteMap extends StatelessWidget {
   final RouteAnalysis route;
 
   @override
+  State<RouteMap> createState() => _RouteMapState();
+}
+
+class _RouteMapState extends State<RouteMap> {
+  var _mapReady = false;
+  var _userMovedMap = false;
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final start = route.polyline.first;
-    final finish = route.polyline.last;
+    final start = widget.route.polyline.first;
+    final finish = widget.route.polyline.last;
 
-    return Stack(
-      children: [
-        FlutterMap(
-          mapController: controller,
-          options: MapOptions(
-            initialCenter: _centerOf(route.polyline),
-            initialZoom: 12.4,
-            interactionOptions: const InteractionOptions(
-              flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+    return ClipRect(
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: FlutterMap(
+              mapController: widget.controller,
+              options: MapOptions(
+                initialCenter: _centerOf(widget.route.polyline),
+                initialZoom: 12.4,
+                minZoom: 3,
+                maxZoom: 19,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                ),
+                onMapReady: () {
+                  _mapReady = true;
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    if (mounted) {
+                      _fitRouteToView();
+                    }
+                  });
+                },
+                onPositionChanged: (_, hasGesture) {
+                  if (hasGesture && !_userMovedMap && mounted) {
+                    setState(() => _userMovedMap = true);
+                  }
+                },
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'dev.mar2ianen.koomot_killer.ui_mvp',
+                  maxZoom: 19,
+                ),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: widget.route.polyline,
+                      strokeWidth: 10,
+                      color: colorScheme.primary.withOpacity(0.22),
+                    ),
+                    Polyline(
+                      points: widget.route.polyline,
+                      strokeWidth: 5,
+                      color: colorScheme.primary,
+                    ),
+                  ],
+                ),
+                MarkerLayer(
+                  markers: [
+                    _buildMarker(
+                      point: start,
+                      color: colorScheme.primary,
+                      icon: Icons.play_arrow_rounded,
+                      label: 'Start',
+                    ),
+                    _buildMarker(
+                      point: finish,
+                      color: colorScheme.tertiary,
+                      icon: Icons.flag_rounded,
+                      label: 'Finish',
+                    ),
+                  ],
+                ),
+              ],
             ),
           ),
-          children: [
-            TileLayer(
-              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-              userAgentPackageName: 'dev.mar2ianen.koomot_killer.ui_mvp',
-              tileProvider: NetworkTileProvider(),
+          Positioned(
+            left: 16,
+            top: 16,
+            child: SafeArea(
+              bottom: false,
+              child: _MapBadge(route: widget.route),
             ),
-            PolylineLayer(
-              polylines: [
-                Polyline(
-                  points: route.polyline,
-                  strokeWidth: 8,
-                  color: colorScheme.primary.withOpacity(0.25),
-                ),
-                Polyline(
-                  points: route.polyline,
-                  strokeWidth: 4,
-                  color: colorScheme.primary,
-                ),
-              ],
+          ),
+          Positioned(
+            right: 16,
+            top: 16,
+            child: SafeArea(
+              bottom: false,
+              child: _MapControls(
+                controller: widget.controller,
+                route: widget.route,
+                onCenterRoute: _fitRouteToView,
+              ),
             ),
-            MarkerLayer(
-              markers: [
-                _buildMarker(
-                  point: start,
-                  color: colorScheme.primary,
-                  icon: Icons.play_arrow_rounded,
-                  label: 'Start',
-                ),
-                _buildMarker(
-                  point: finish,
-                  color: colorScheme.tertiary,
-                  icon: Icons.flag_rounded,
-                  label: 'Finish',
-                ),
-              ],
+          ),
+          Positioned(
+            left: 16,
+            bottom: 16,
+            child: _AttributionPill(colorScheme: colorScheme),
+          ),
+          if (_userMovedMap)
+            Positioned(
+              right: 16,
+              bottom: 16,
+              child: _RecenterButton(onPressed: _fitRouteToView),
             ),
-          ],
-        ),
-        Positioned(
-          left: 16,
-          top: 16,
-          child: _MapBadge(route: route),
-        ),
-        Positioned(
-          right: 16,
-          top: 16,
-          child: _MapControls(controller: controller, route: route),
-        ),
-        Positioned(
-          left: 16,
-          bottom: 16,
-          child: _AttributionPill(colorScheme: colorScheme),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  void _fitRouteToView() {
+    if (!_mapReady || widget.route.polyline.isEmpty) {
+      return;
+    }
+
+    final bounds = LatLngBounds.fromPoints(widget.route.polyline);
+    widget.controller.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.fromLTRB(48, 160, 48, 260),
+      ),
+    );
+
+    if (_userMovedMap && mounted) {
+      setState(() => _userMovedMap = false);
+    }
   }
 
   static Marker _buildMarker({
@@ -180,10 +244,15 @@ class _MapBadge extends StatelessWidget {
 }
 
 class _MapControls extends StatelessWidget {
-  const _MapControls({required this.controller, required this.route});
+  const _MapControls({
+    required this.controller,
+    required this.route,
+    required this.onCenterRoute,
+  });
 
   final MapController controller;
   final RouteAnalysis route;
+  final VoidCallback onCenterRoute;
 
   @override
   Widget build(BuildContext context) {
@@ -196,21 +265,43 @@ class _MapControls extends StatelessWidget {
         children: [
           IconButton(
             tooltip: 'Zoom in',
-            onPressed: () => controller.move(controller.camera.center, controller.camera.zoom + 1),
+            onPressed: () => _zoomBy(1),
             icon: const Icon(Icons.add_rounded),
           ),
           IconButton(
             tooltip: 'Zoom out',
-            onPressed: () => controller.move(controller.camera.center, controller.camera.zoom - 1),
+            onPressed: () => _zoomBy(-1),
             icon: const Icon(Icons.remove_rounded),
           ),
           IconButton(
             tooltip: 'Center route',
-            onPressed: () => controller.move(RouteMap._centerOf(route.polyline), 12.4),
+            onPressed: onCenterRoute,
             icon: const Icon(Icons.my_location_rounded),
           ),
         ],
       ),
+    );
+  }
+
+  void _zoomBy(double delta) {
+    final camera = controller.camera;
+    final zoom = math.max(3, math.min(19, camera.zoom + delta)).toDouble();
+    controller.move(camera.center, zoom);
+  }
+}
+
+class _RecenterButton extends StatelessWidget {
+  const _RecenterButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton.extended(
+      heroTag: 'recenter-map',
+      onPressed: onPressed,
+      icon: const Icon(Icons.center_focus_strong_rounded),
+      label: const Text('Route'),
     );
   }
 }
