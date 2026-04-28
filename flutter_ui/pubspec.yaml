@@ -1,7 +1,7 @@
 name: kk_flutter_ui_mvp
 description: Minimal Material 3 UI prototype for Komoot Killer GPX route viewer.
 publish_to: "none"
-version: 0.1.4+5
+version: 0.1.5+6
 
 environment:
   sdk: ">=3.5.0 <4.0.0"

@@ -53,30 +53,14 @@ class GpxImporter {
     final document = XmlDocument.parse(rawXml);
     final name = _extractRouteName(document, fallbackName);
 
-    var pointElements = _elementsByLocalName(document, 'trkpt').toList();
-
-    if (pointElements.length < 2) {
-      pointElements = _elementsByLocalName(document, 'rtept').toList();
-    }
-
-    if (pointElements.length < 2) {
-      pointElements = _elementsByLocalName(document, 'wpt').toList();
-    }
-
-    if (pointElements.length < 2) {
-      throw const GpxImportException(
-        'GPX must contain at least two track, route or waypoint points.',
-      );
-    }
-
-    final parsed = _parsePoints(pointElements);
+    final parsed = _parseRouteParts(document);
 
     if (parsed.points.length < 2) {
       throw const GpxImportException('GPX does not contain enough valid coordinates.');
     }
 
-    final stats = _calculateStats(parsed.points);
-    final segments = _buildSegments(parsed.points);
+    final stats = _calculateStats(parsed.parts);
+    final segments = _buildSegments(parsed.parts);
 
     return RouteAnalysis(
       name: name,
@@ -90,7 +74,52 @@ class GpxImporter {
       warnings: _buildWarnings(
         hasMissingElevation: parsed.hasMissingElevation,
         usedPointCount: parsed.points.length,
+        routePartCount: parsed.parts.length,
       ),
+    );
+  }
+
+  static _ParsedRoute _parseRouteParts(XmlDocument document) {
+    final parts = <List<RoutePoint>>[];
+    var hasMissingElevation = false;
+
+    for (final segmentElement in _elementsByLocalName(document, 'trkseg')) {
+      final pointElements = _directChildElementsByLocalName(segmentElement, 'trkpt').toList();
+      final parsed = _parsePoints(pointElements);
+
+      if (parsed.points.length >= 2) {
+        parts.add(parsed.points);
+      }
+
+      hasMissingElevation = hasMissingElevation || parsed.hasMissingElevation;
+    }
+
+    if (parts.isEmpty) {
+      var pointElements = _elementsByLocalName(document, 'trkpt').toList();
+
+      if (pointElements.length < 2) {
+        pointElements = _elementsByLocalName(document, 'rtept').toList();
+      }
+
+      if (pointElements.length < 2) {
+        pointElements = _elementsByLocalName(document, 'wpt').toList();
+      }
+
+      final parsed = _parsePoints(pointElements);
+
+      if (parsed.points.length >= 2) {
+        parts.add(parsed.points);
+      }
+
+      hasMissingElevation = hasMissingElevation || parsed.hasMissingElevation;
+    }
+
+    final points = parts.expand((part) => part).toList(growable: false);
+
+    return _ParsedRoute(
+      parts: parts,
+      points: points,
+      hasMissingElevation: hasMissingElevation,
     );
   }
 
@@ -130,29 +159,32 @@ class GpxImporter {
     );
   }
 
-  static _RouteStats _calculateStats(List<RoutePoint> points) {
+  static _RouteStats _calculateStats(List<List<RoutePoint>> parts) {
+    final allPoints = parts.expand((part) => part).toList(growable: false);
     var distanceM = 0.0;
     var gainM = 0.0;
     var lossM = 0.0;
-    var minElevationM = points.first.elevationM;
-    var maxElevationM = points.first.elevationM;
+    var minElevationM = allPoints.isEmpty ? 0.0 : allPoints.first.elevationM;
+    var maxElevationM = allPoints.isEmpty ? 0.0 : allPoints.first.elevationM;
 
-    for (var i = 1; i < points.length; i++) {
-      final previous = points[i - 1];
-      final current = points[i];
+    for (final points in parts) {
+      for (var i = 1; i < points.length; i++) {
+        final previous = points[i - 1];
+        final current = points[i];
 
-      distanceM += _distanceMeters(previous.position, current.position);
+        distanceM += _distanceMeters(previous.position, current.position);
 
-      final elevationDelta = current.elevationM - previous.elevationM;
+        final elevationDelta = current.elevationM - previous.elevationM;
 
-      if (elevationDelta > 0.3) {
-        gainM += elevationDelta;
-      } else if (elevationDelta < -0.3) {
-        lossM += elevationDelta.abs();
+        if (elevationDelta > 0.3) {
+          gainM += elevationDelta;
+        } else if (elevationDelta < -0.3) {
+          lossM += elevationDelta.abs();
+        }
+
+        minElevationM = math.min(minElevationM, current.elevationM);
+        maxElevationM = math.max(maxElevationM, current.elevationM);
       }
-
-      minElevationM = math.min(minElevationM, current.elevationM);
-      maxElevationM = math.max(maxElevationM, current.elevationM);
     }
 
     return _RouteStats(
@@ -164,45 +196,71 @@ class GpxImporter {
     );
   }
 
-  static List<RouteSegment> _buildSegments(List<RoutePoint> points) {
+  static List<RouteSegment> _buildSegments(List<List<RoutePoint>> parts) {
     const targetSegmentDistanceM = 5000.0;
 
     final segments = <RouteSegment>[];
+    var totalDistanceM = 0.0;
+    var segmentStartM = 0.0;
     var segmentDistanceM = 0.0;
     var segmentGainM = 0.0;
-    var segmentIndex = 1;
 
-    for (var i = 1; i < points.length; i++) {
-      final previous = points[i - 1];
-      final current = points[i];
-
-      final stepDistanceM = _distanceMeters(previous.position, current.position);
-      final elevationDelta = current.elevationM - previous.elevationM;
-
-      segmentDistanceM += stepDistanceM;
-
-      if (elevationDelta > 0.3) {
-        segmentGainM += elevationDelta;
+    void flushSegment() {
+      if (segmentDistanceM <= 1.0) {
+        return;
       }
 
-      final isLastPoint = i == points.length - 1;
+      segments.add(
+        RouteSegment(
+          title: '${_formatKm(segmentStartM)}-${_formatKm(totalDistanceM)} km',
+          distanceKm: segmentDistanceM / 1000.0,
+          elevationGainM: segmentGainM,
+          surfaceLabel: 'GPX only',
+          warningLevel: SegmentWarningLevel.info,
+        ),
+      );
 
-      if (segmentDistanceM >= targetSegmentDistanceM || isLastPoint) {
-        segments.add(
-          RouteSegment(
-            title: 'Segment $segmentIndex',
-            distanceKm: segmentDistanceM / 1000.0,
-            elevationGainM: segmentGainM,
-            surfaceLabel: 'GPX only',
-            warningLevel: SegmentWarningLevel.info,
-          ),
-        );
+      segmentStartM = totalDistanceM;
+      segmentDistanceM = 0.0;
+      segmentGainM = 0.0;
+    }
 
-        segmentDistanceM = 0.0;
-        segmentGainM = 0.0;
-        segmentIndex++;
+    for (final points in parts) {
+      for (var i = 1; i < points.length; i++) {
+        final previous = points[i - 1];
+        final current = points[i];
+
+        final stepDistanceM = _distanceMeters(previous.position, current.position);
+
+        if (stepDistanceM <= 0) {
+          continue;
+        }
+
+        final elevationDelta = current.elevationM - previous.elevationM;
+        var remainingStepM = stepDistanceM;
+
+        while (remainingStepM > 0) {
+          final remainingSegmentM = targetSegmentDistanceM - segmentDistanceM;
+          final takenM = math.min(remainingStepM, remainingSegmentM);
+          final takenFraction = takenM / stepDistanceM;
+
+          segmentDistanceM += takenM;
+          totalDistanceM += takenM;
+
+          if (elevationDelta > 0.3) {
+            segmentGainM += elevationDelta * takenFraction;
+          }
+
+          remainingStepM -= takenM;
+
+          if (segmentDistanceM >= targetSegmentDistanceM - 0.001) {
+            flushSegment();
+          }
+        }
       }
     }
+
+    flushSegment();
 
     return segments;
   }
@@ -210,6 +268,7 @@ class GpxImporter {
   static List<RouteWarning> _buildWarnings({
     required bool hasMissingElevation,
     required int usedPointCount,
+    required int routePartCount,
   }) {
     return [
       RouteWarning(
@@ -217,6 +276,12 @@ class GpxImporter {
         description: '$usedPointCount points parsed locally on device.',
         icon: '📍',
       ),
+      if (routePartCount > 1)
+        RouteWarning(
+          title: 'Multiple GPX track segments',
+          description: '$routePartCount track parts detected. Gaps are not counted as route distance.',
+          icon: '🧩',
+        ),
       if (hasMissingElevation)
         const RouteWarning(
           title: 'Some elevation data is missing',
@@ -256,6 +321,17 @@ class GpxImporter {
     }
   }
 
+  static Iterable<XmlElement> _directChildElementsByLocalName(
+    XmlElement element,
+    String localName,
+  ) sync* {
+    for (final child in element.children.whereType<XmlElement>()) {
+      if (child.name.local == localName) {
+        yield child;
+      }
+    }
+  }
+
   static String? _attributeByLocalName(XmlElement element, String localName) {
     for (final attribute in element.attributes) {
       if (attribute.name.local == localName) {
@@ -265,6 +341,8 @@ class GpxImporter {
 
     return null;
   }
+
+  static String _formatKm(double meters) => (meters / 1000.0).toStringAsFixed(1);
 
   static String? _directChildTextByLocalName(XmlElement element, String localName) {
     for (final child in element.children.whereType<XmlElement>()) {
@@ -298,6 +376,18 @@ class _ParsedPoints {
     required this.hasMissingElevation,
   });
 
+  final List<RoutePoint> points;
+  final bool hasMissingElevation;
+}
+
+class _ParsedRoute {
+  const _ParsedRoute({
+    required this.parts,
+    required this.points,
+    required this.hasMissingElevation,
+  });
+
+  final List<List<RoutePoint>> parts;
   final List<RoutePoint> points;
   final bool hasMissingElevation;
 }
