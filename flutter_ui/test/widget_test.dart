@@ -8,12 +8,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:kk_flutter_ui_mvp/main.dart';
+import 'package:kk_flutter_ui_mvp/src/app/kk_app.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const KkApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

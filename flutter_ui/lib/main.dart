@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'src/app/kk_app.dart';
+import 'src/rust/frb_generated.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await RustLib.init();
+
   runApp(const KkApp());
 }

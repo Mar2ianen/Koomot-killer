@@ -1,0 +1,15 @@
+[workspace]
+members = [
+    "crates/kk_core",
+    "rust_core",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["Mar2ianen and contributors"]
+repository = "https://github.com/Mar2ianen/Koomot-killer"
+
+[workspace.lints.rust]
+unsafe_code = "forbid"

@@ -1,0 +1,9 @@
+# Flutter Rust Bridge v2 config.
+# Run from repository root:
+#   cd flutter_ui
+#   flutter pub get
+#   cd ..
+#   dart run flutter_rust_bridge_codegen generate
+rust_input: "crate::api"
+rust_root: "rust_core"
+dart_output: flutter_ui/lib/src/rust

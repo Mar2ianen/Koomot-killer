@@ -1,0 +1,17 @@
+[package]
+name = "rust_core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[lib]
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[dependencies]
+flutter_rust_bridge = "=2.11.1"
+gpx = "0.10"
+thiserror = "1"
+
+[profile.release]
+codegen-units = 1
+lto = "thin"

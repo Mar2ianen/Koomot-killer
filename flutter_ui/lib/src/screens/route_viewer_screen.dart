@@ -3,7 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 
 import '../data/demo_route.dart';
 import '../models/route_models.dart';
-import '../services/gpx_importer.dart';
+import '../services/rust_gpx_importer.dart';
 import '../widgets/elevation_profile_card.dart';
 import '../widgets/route_map.dart';
 import '../widgets/route_overview_card.dart';
