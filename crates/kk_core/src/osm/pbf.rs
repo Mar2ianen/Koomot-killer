@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs::File;
+use std::io::{Read, Seek};
 use std::path::{Path, PathBuf};
 
 use osmpbfreader::{NodeId, OsmObj, OsmPbfReader, Tags};
@@ -7,7 +8,9 @@ use thiserror::Error;
 
 use crate::geo::{haversine_meters, BBox, PackedPoint};
 use crate::osm::model::{OsmPack, OsmPackMeta, RoadSegment};
-use crate::osm::tags::{normalize_access, normalize_highway, normalize_smoothness, normalize_surface};
+use crate::osm::tags::{
+    normalize_access, normalize_highway, normalize_smoothness, normalize_surface,
+};
 
 #[derive(Debug, Clone)]
 pub struct PbfImportConfig {
@@ -33,10 +36,23 @@ pub enum PbfImportError {
     Pbf(#[from] osmpbfreader::Error),
 }
 
-pub fn import_osm_pbf(path: impl AsRef<Path>) -> Result<(OsmPack, PbfImportReport), PbfImportError> {
+pub fn import_osm_pbf(
+    path: impl AsRef<Path>,
+) -> Result<(OsmPack, PbfImportReport), PbfImportError> {
     let source_path = path.as_ref().to_path_buf();
     let file = File::open(&source_path)?;
-    let mut reader = OsmPbfReader::new(file);
+    import_osm_pbf_reader(file, source_path.display().to_string())
+}
+
+pub fn import_osm_pbf_reader<R>(
+    reader: R,
+    source: impl Into<String>,
+) -> Result<(OsmPack, PbfImportReport), PbfImportError>
+where
+    R: Read + Seek,
+{
+    let source = source.into();
+    let mut reader = OsmPbfReader::new(reader);
 
     let objects = reader.get_objs_and_deps(|obj| match obj {
         OsmObj::Way(way) => is_candidate_highway_way(&way.tags),
@@ -112,7 +128,6 @@ pub fn import_osm_pbf(path: impl AsRef<Path>) -> Result<(OsmPack, PbfImportRepor
         }
     }
 
-    let source = source_path.display().to_string();
     let report = PbfImportReport {
         source: source.clone(),
         highway_ways: highway_ways.len(),
@@ -147,5 +162,7 @@ fn is_candidate_highway_way(tags: &Tags) -> bool {
 }
 
 fn tag_value(tags: &Tags, key: &str) -> Option<String> {
-    tags.get(key).map(ToString::to_string).filter(|value| !value.is_empty())
+    tags.get(key)
+        .map(ToString::to_string)
+        .filter(|value| !value.is_empty())
 }

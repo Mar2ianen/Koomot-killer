@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -2139432152;
+  int get rustContentHash => -1030812327;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -79,6 +79,11 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<OsmPackBuildDto> crateApiBuildOsmPackBytesFromPbf(
+      {required List<int> bytes, required String sourceName});
+
+  Future<OsmPackStatsDto> crateApiInspectKkosmBytes({required List<int> bytes});
+
   Future<RouteAnalysisDto> crateApiParseGpxBytes(
       {required List<int> bytes, required String fallbackName});
 }
@@ -92,6 +97,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<OsmPackBuildDto> crateApiBuildOsmPackBytesFromPbf(
+      {required List<int> bytes, required String sourceName}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_prim_u_8_loose(bytes, serializer);
+        sse_encode_String(sourceName, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 1, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_osm_pack_build_dto,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiBuildOsmPackBytesFromPbfConstMeta,
+      argValues: [bytes, sourceName],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiBuildOsmPackBytesFromPbfConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_osm_pack_bytes_from_pbf",
+        argNames: ["bytes", "sourceName"],
+      );
+
+  @override
+  Future<OsmPackStatsDto> crateApiInspectKkosmBytes(
+      {required List<int> bytes}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_list_prim_u_8_loose(bytes, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_osm_pack_stats_dto,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiInspectKkosmBytesConstMeta,
+      argValues: [bytes],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiInspectKkosmBytesConstMeta => const TaskConstMeta(
+        debugName: "inspect_kkosm_bytes",
+        argNames: ["bytes"],
+      );
+
+  @override
   Future<RouteAnalysisDto> crateApiParseGpxBytes(
       {required List<int> bytes, required String fallbackName}) {
     return handler.executeNormal(NormalTask(
@@ -100,7 +157,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_list_prim_u_8_loose(bytes, serializer);
         sse_encode_String(fallbackName, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 1, port: port_);
+            funcId: 3, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_route_analysis_dto,
@@ -130,6 +187,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<OsmClassStatsDto> dco_decode_list_osm_class_stats_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_osm_class_stats_dto).toList();
+  }
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as List<int>;
@@ -139,6 +202,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
+  }
+
+  @protected
+  List<RoutePartDto> dco_decode_list_route_part_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_route_part_dto).toList();
   }
 
   @protected
@@ -160,11 +229,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  OsmClassStatsDto dco_decode_osm_class_stats_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return OsmClassStatsDto(
+      className: dco_decode_String(arr[0]),
+      segments: dco_decode_u_32(arr[1]),
+      lengthKm: dco_decode_f_64(arr[2]),
+    );
+  }
+
+  @protected
+  OsmImportReportDto dco_decode_osm_import_report_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return OsmImportReportDto(
+      source: dco_decode_String(arr[0]),
+      highwayWays: dco_decode_u_32(arr[1]),
+      roadSegments: dco_decode_u_32(arr[2]),
+      skippedDegenerateSegments: dco_decode_u_32(arr[3]),
+      skippedMissingNodes: dco_decode_u_32(arr[4]),
+      totalLengthKm: dco_decode_f_64(arr[5]),
+    );
+  }
+
+  @protected
+  OsmPackBuildDto dco_decode_osm_pack_build_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return OsmPackBuildDto(
+      packBytes: dco_decode_list_prim_u_8_strict(arr[0]),
+      stats: dco_decode_osm_pack_stats_dto(arr[1]),
+      report: dco_decode_osm_import_report_dto(arr[2]),
+    );
+  }
+
+  @protected
+  OsmPackStatsDto dco_decode_osm_pack_stats_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return OsmPackStatsDto(
+      source: dco_decode_String(arr[0]),
+      formatVersion: dco_decode_u_32(arr[1]),
+      roadSegments: dco_decode_u_32(arr[2]),
+      totalLengthKm: dco_decode_f_64(arr[3]),
+      byHighway: dco_decode_list_osm_class_stats_dto(arr[4]),
+      bySurface: dco_decode_list_osm_class_stats_dto(arr[5]),
+    );
+  }
+
+  @protected
   RouteAnalysisDto dco_decode_route_analysis_dto(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 9)
-      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
     return RouteAnalysisDto(
       name: dco_decode_String(arr[0]),
       points: dco_decode_list_route_point_dto(arr[1]),
@@ -173,8 +300,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       elevationLossM: dco_decode_f_64(arr[4]),
       minElevationM: dco_decode_f_64(arr[5]),
       maxElevationM: dco_decode_f_64(arr[6]),
-      segments: dco_decode_list_route_segment_dto(arr[7]),
-      warnings: dco_decode_list_route_warning_dto(arr[8]),
+      bounds: dco_decode_route_bounds_dto(arr[7]),
+      parts: dco_decode_list_route_part_dto(arr[8]),
+      segments: dco_decode_list_route_segment_dto(arr[9]),
+      warnings: dco_decode_list_route_warning_dto(arr[10]),
+    );
+  }
+
+  @protected
+  RouteBoundsDto dco_decode_route_bounds_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return RouteBoundsDto(
+      minLat: dco_decode_f_64(arr[0]),
+      minLon: dco_decode_f_64(arr[1]),
+      maxLat: dco_decode_f_64(arr[2]),
+      maxLon: dco_decode_f_64(arr[3]),
+    );
+  }
+
+  @protected
+  RoutePartDto dco_decode_route_part_dto(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return RoutePartDto(
+      index: dco_decode_u_32(arr[0]),
+      startIndex: dco_decode_u_32(arr[1]),
+      endIndex: dco_decode_u_32(arr[2]),
+      pointCount: dco_decode_u_32(arr[3]),
     );
   }
 
@@ -220,6 +377,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int dco_decode_u_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as int;
+  }
+
+  @protected
   int dco_decode_u_8(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -239,6 +402,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<OsmClassStatsDto> sse_decode_list_osm_class_stats_dto(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <OsmClassStatsDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_osm_class_stats_dto(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -250,6 +426,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
     return deserializer.buffer.getUint8List(len_);
+  }
+
+  @protected
+  List<RoutePartDto> sse_decode_list_route_part_dto(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <RoutePartDto>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_route_part_dto(deserializer));
+    }
+    return ans_;
   }
 
   @protected
@@ -292,6 +481,66 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  OsmClassStatsDto sse_decode_osm_class_stats_dto(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_className = sse_decode_String(deserializer);
+    var var_segments = sse_decode_u_32(deserializer);
+    var var_lengthKm = sse_decode_f_64(deserializer);
+    return OsmClassStatsDto(
+        className: var_className,
+        segments: var_segments,
+        lengthKm: var_lengthKm);
+  }
+
+  @protected
+  OsmImportReportDto sse_decode_osm_import_report_dto(
+      SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_source = sse_decode_String(deserializer);
+    var var_highwayWays = sse_decode_u_32(deserializer);
+    var var_roadSegments = sse_decode_u_32(deserializer);
+    var var_skippedDegenerateSegments = sse_decode_u_32(deserializer);
+    var var_skippedMissingNodes = sse_decode_u_32(deserializer);
+    var var_totalLengthKm = sse_decode_f_64(deserializer);
+    return OsmImportReportDto(
+        source: var_source,
+        highwayWays: var_highwayWays,
+        roadSegments: var_roadSegments,
+        skippedDegenerateSegments: var_skippedDegenerateSegments,
+        skippedMissingNodes: var_skippedMissingNodes,
+        totalLengthKm: var_totalLengthKm);
+  }
+
+  @protected
+  OsmPackBuildDto sse_decode_osm_pack_build_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_packBytes = sse_decode_list_prim_u_8_strict(deserializer);
+    var var_stats = sse_decode_osm_pack_stats_dto(deserializer);
+    var var_report = sse_decode_osm_import_report_dto(deserializer);
+    return OsmPackBuildDto(
+        packBytes: var_packBytes, stats: var_stats, report: var_report);
+  }
+
+  @protected
+  OsmPackStatsDto sse_decode_osm_pack_stats_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_source = sse_decode_String(deserializer);
+    var var_formatVersion = sse_decode_u_32(deserializer);
+    var var_roadSegments = sse_decode_u_32(deserializer);
+    var var_totalLengthKm = sse_decode_f_64(deserializer);
+    var var_byHighway = sse_decode_list_osm_class_stats_dto(deserializer);
+    var var_bySurface = sse_decode_list_osm_class_stats_dto(deserializer);
+    return OsmPackStatsDto(
+        source: var_source,
+        formatVersion: var_formatVersion,
+        roadSegments: var_roadSegments,
+        totalLengthKm: var_totalLengthKm,
+        byHighway: var_byHighway,
+        bySurface: var_bySurface);
+  }
+
+  @protected
   RouteAnalysisDto sse_decode_route_analysis_dto(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_name = sse_decode_String(deserializer);
@@ -301,6 +550,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_elevationLossM = sse_decode_f_64(deserializer);
     var var_minElevationM = sse_decode_f_64(deserializer);
     var var_maxElevationM = sse_decode_f_64(deserializer);
+    var var_bounds = sse_decode_route_bounds_dto(deserializer);
+    var var_parts = sse_decode_list_route_part_dto(deserializer);
     var var_segments = sse_decode_list_route_segment_dto(deserializer);
     var var_warnings = sse_decode_list_route_warning_dto(deserializer);
     return RouteAnalysisDto(
@@ -311,8 +562,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         elevationLossM: var_elevationLossM,
         minElevationM: var_minElevationM,
         maxElevationM: var_maxElevationM,
+        bounds: var_bounds,
+        parts: var_parts,
         segments: var_segments,
         warnings: var_warnings);
+  }
+
+  @protected
+  RouteBoundsDto sse_decode_route_bounds_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_minLat = sse_decode_f_64(deserializer);
+    var var_minLon = sse_decode_f_64(deserializer);
+    var var_maxLat = sse_decode_f_64(deserializer);
+    var var_maxLon = sse_decode_f_64(deserializer);
+    return RouteBoundsDto(
+        minLat: var_minLat,
+        minLon: var_minLon,
+        maxLat: var_maxLat,
+        maxLon: var_maxLon);
+  }
+
+  @protected
+  RoutePartDto sse_decode_route_part_dto(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_index = sse_decode_u_32(deserializer);
+    var var_startIndex = sse_decode_u_32(deserializer);
+    var var_endIndex = sse_decode_u_32(deserializer);
+    var var_pointCount = sse_decode_u_32(deserializer);
+    return RoutePartDto(
+        index: var_index,
+        startIndex: var_startIndex,
+        endIndex: var_endIndex,
+        pointCount: var_pointCount);
   }
 
   @protected
@@ -352,6 +633,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  int sse_decode_u_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getUint32();
+  }
+
+  @protected
   int sse_decode_u_8(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8();
@@ -382,6 +669,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_osm_class_stats_dto(
+      List<OsmClassStatsDto> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_osm_class_stats_dto(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_loose(
       List<int> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -396,6 +693,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
     serializer.buffer.putUint8List(self);
+  }
+
+  @protected
+  void sse_encode_list_route_part_dto(
+      List<RoutePartDto> self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_route_part_dto(item, serializer);
+    }
   }
 
   @protected
@@ -429,6 +736,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_osm_class_stats_dto(
+      OsmClassStatsDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.className, serializer);
+    sse_encode_u_32(self.segments, serializer);
+    sse_encode_f_64(self.lengthKm, serializer);
+  }
+
+  @protected
+  void sse_encode_osm_import_report_dto(
+      OsmImportReportDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.source, serializer);
+    sse_encode_u_32(self.highwayWays, serializer);
+    sse_encode_u_32(self.roadSegments, serializer);
+    sse_encode_u_32(self.skippedDegenerateSegments, serializer);
+    sse_encode_u_32(self.skippedMissingNodes, serializer);
+    sse_encode_f_64(self.totalLengthKm, serializer);
+  }
+
+  @protected
+  void sse_encode_osm_pack_build_dto(
+      OsmPackBuildDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_prim_u_8_strict(self.packBytes, serializer);
+    sse_encode_osm_pack_stats_dto(self.stats, serializer);
+    sse_encode_osm_import_report_dto(self.report, serializer);
+  }
+
+  @protected
+  void sse_encode_osm_pack_stats_dto(
+      OsmPackStatsDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.source, serializer);
+    sse_encode_u_32(self.formatVersion, serializer);
+    sse_encode_u_32(self.roadSegments, serializer);
+    sse_encode_f_64(self.totalLengthKm, serializer);
+    sse_encode_list_osm_class_stats_dto(self.byHighway, serializer);
+    sse_encode_list_osm_class_stats_dto(self.bySurface, serializer);
+  }
+
+  @protected
   void sse_encode_route_analysis_dto(
       RouteAnalysisDto self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -439,8 +788,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_f_64(self.elevationLossM, serializer);
     sse_encode_f_64(self.minElevationM, serializer);
     sse_encode_f_64(self.maxElevationM, serializer);
+    sse_encode_route_bounds_dto(self.bounds, serializer);
+    sse_encode_list_route_part_dto(self.parts, serializer);
     sse_encode_list_route_segment_dto(self.segments, serializer);
     sse_encode_list_route_warning_dto(self.warnings, serializer);
+  }
+
+  @protected
+  void sse_encode_route_bounds_dto(
+      RouteBoundsDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.minLat, serializer);
+    sse_encode_f_64(self.minLon, serializer);
+    sse_encode_f_64(self.maxLat, serializer);
+    sse_encode_f_64(self.maxLon, serializer);
+  }
+
+  @protected
+  void sse_encode_route_part_dto(RoutePartDto self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.index, serializer);
+    sse_encode_u_32(self.startIndex, serializer);
+    sse_encode_u_32(self.endIndex, serializer);
+    sse_encode_u_32(self.pointCount, serializer);
   }
 
   @protected
@@ -470,6 +840,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.title, serializer);
     sse_encode_String(self.description, serializer);
     sse_encode_String(self.icon, serializer);
+  }
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putUint32(self);
   }
 
   @protected

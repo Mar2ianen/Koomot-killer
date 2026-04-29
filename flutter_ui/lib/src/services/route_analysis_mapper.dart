@@ -20,6 +20,22 @@ extension RouteAnalysisDtoMapper on rust_api.RouteAnalysisDto {
       elevationLossM: elevationLossM,
       minElevationM: minElevationM,
       maxElevationM: maxElevationM,
+      bounds: RouteBounds(
+        minLat: bounds.minLat,
+        minLon: bounds.minLon,
+        maxLat: bounds.maxLat,
+        maxLon: bounds.maxLon,
+      ),
+      parts: parts
+          .map(
+            (part) => RoutePart(
+              index: part.index,
+              startIndex: part.startIndex,
+              endIndex: part.endIndex,
+              pointCount: part.pointCount,
+            ),
+          )
+          .toList(growable: false),
       segments: segments
           .map(
             (segment) => RouteSegment(

@@ -6,12 +6,147 @@
 import 'frb_generated.dart';
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 Future<RouteAnalysisDto> parseGpxBytes(
         {required List<int> bytes, required String fallbackName}) =>
     RustLib.instance.api
         .crateApiParseGpxBytes(bytes: bytes, fallbackName: fallbackName);
+
+Future<OsmPackBuildDto> buildOsmPackBytesFromPbf(
+        {required List<int> bytes, required String sourceName}) =>
+    RustLib.instance.api
+        .crateApiBuildOsmPackBytesFromPbf(bytes: bytes, sourceName: sourceName);
+
+Future<OsmPackStatsDto> inspectKkosmBytes({required List<int> bytes}) =>
+    RustLib.instance.api.crateApiInspectKkosmBytes(bytes: bytes);
+
+class OsmClassStatsDto {
+  final String className;
+  final int segments;
+  final double lengthKm;
+
+  const OsmClassStatsDto({
+    required this.className,
+    required this.segments,
+    required this.lengthKm,
+  });
+
+  @override
+  int get hashCode =>
+      className.hashCode ^ segments.hashCode ^ lengthKm.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OsmClassStatsDto &&
+          runtimeType == other.runtimeType &&
+          className == other.className &&
+          segments == other.segments &&
+          lengthKm == other.lengthKm;
+}
+
+class OsmImportReportDto {
+  final String source;
+  final int highwayWays;
+  final int roadSegments;
+  final int skippedDegenerateSegments;
+  final int skippedMissingNodes;
+  final double totalLengthKm;
+
+  const OsmImportReportDto({
+    required this.source,
+    required this.highwayWays,
+    required this.roadSegments,
+    required this.skippedDegenerateSegments,
+    required this.skippedMissingNodes,
+    required this.totalLengthKm,
+  });
+
+  @override
+  int get hashCode =>
+      source.hashCode ^
+      highwayWays.hashCode ^
+      roadSegments.hashCode ^
+      skippedDegenerateSegments.hashCode ^
+      skippedMissingNodes.hashCode ^
+      totalLengthKm.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OsmImportReportDto &&
+          runtimeType == other.runtimeType &&
+          source == other.source &&
+          highwayWays == other.highwayWays &&
+          roadSegments == other.roadSegments &&
+          skippedDegenerateSegments == other.skippedDegenerateSegments &&
+          skippedMissingNodes == other.skippedMissingNodes &&
+          totalLengthKm == other.totalLengthKm;
+}
+
+class OsmPackBuildDto {
+  final Uint8List packBytes;
+  final OsmPackStatsDto stats;
+  final OsmImportReportDto report;
+
+  const OsmPackBuildDto({
+    required this.packBytes,
+    required this.stats,
+    required this.report,
+  });
+
+  @override
+  int get hashCode => packBytes.hashCode ^ stats.hashCode ^ report.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OsmPackBuildDto &&
+          runtimeType == other.runtimeType &&
+          packBytes == other.packBytes &&
+          stats == other.stats &&
+          report == other.report;
+}
+
+class OsmPackStatsDto {
+  final String source;
+  final int formatVersion;
+  final int roadSegments;
+  final double totalLengthKm;
+  final List<OsmClassStatsDto> byHighway;
+  final List<OsmClassStatsDto> bySurface;
+
+  const OsmPackStatsDto({
+    required this.source,
+    required this.formatVersion,
+    required this.roadSegments,
+    required this.totalLengthKm,
+    required this.byHighway,
+    required this.bySurface,
+  });
+
+  @override
+  int get hashCode =>
+      source.hashCode ^
+      formatVersion.hashCode ^
+      roadSegments.hashCode ^
+      totalLengthKm.hashCode ^
+      byHighway.hashCode ^
+      bySurface.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OsmPackStatsDto &&
+          runtimeType == other.runtimeType &&
+          source == other.source &&
+          formatVersion == other.formatVersion &&
+          roadSegments == other.roadSegments &&
+          totalLengthKm == other.totalLengthKm &&
+          byHighway == other.byHighway &&
+          bySurface == other.bySurface;
+}
 
 class RouteAnalysisDto {
   final String name;
@@ -21,6 +156,8 @@ class RouteAnalysisDto {
   final double elevationLossM;
   final double minElevationM;
   final double maxElevationM;
+  final RouteBoundsDto bounds;
+  final List<RoutePartDto> parts;
   final List<RouteSegmentDto> segments;
   final List<RouteWarningDto> warnings;
 
@@ -32,6 +169,8 @@ class RouteAnalysisDto {
     required this.elevationLossM,
     required this.minElevationM,
     required this.maxElevationM,
+    required this.bounds,
+    required this.parts,
     required this.segments,
     required this.warnings,
   });
@@ -45,6 +184,8 @@ class RouteAnalysisDto {
       elevationLossM.hashCode ^
       minElevationM.hashCode ^
       maxElevationM.hashCode ^
+      bounds.hashCode ^
+      parts.hashCode ^
       segments.hashCode ^
       warnings.hashCode;
 
@@ -60,8 +201,69 @@ class RouteAnalysisDto {
           elevationLossM == other.elevationLossM &&
           minElevationM == other.minElevationM &&
           maxElevationM == other.maxElevationM &&
+          bounds == other.bounds &&
+          parts == other.parts &&
           segments == other.segments &&
           warnings == other.warnings;
+}
+
+class RouteBoundsDto {
+  final double minLat;
+  final double minLon;
+  final double maxLat;
+  final double maxLon;
+
+  const RouteBoundsDto({
+    required this.minLat,
+    required this.minLon,
+    required this.maxLat,
+    required this.maxLon,
+  });
+
+  @override
+  int get hashCode =>
+      minLat.hashCode ^ minLon.hashCode ^ maxLat.hashCode ^ maxLon.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RouteBoundsDto &&
+          runtimeType == other.runtimeType &&
+          minLat == other.minLat &&
+          minLon == other.minLon &&
+          maxLat == other.maxLat &&
+          maxLon == other.maxLon;
+}
+
+class RoutePartDto {
+  final int index;
+  final int startIndex;
+  final int endIndex;
+  final int pointCount;
+
+  const RoutePartDto({
+    required this.index,
+    required this.startIndex,
+    required this.endIndex,
+    required this.pointCount,
+  });
+
+  @override
+  int get hashCode =>
+      index.hashCode ^
+      startIndex.hashCode ^
+      endIndex.hashCode ^
+      pointCount.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RoutePartDto &&
+          runtimeType == other.runtimeType &&
+          index == other.index &&
+          startIndex == other.startIndex &&
+          endIndex == other.endIndex &&
+          pointCount == other.pointCount;
 }
 
 class RoutePointDto {

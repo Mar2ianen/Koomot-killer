@@ -23,6 +23,14 @@ impl OsmPack {
         Ok(())
     }
 
+    pub fn to_bincode_bytes(&self) -> Result<Vec<u8>, PackIoError> {
+        Ok(bincode::serialize(self)?)
+    }
+
+    pub fn from_bincode_bytes(bytes: &[u8]) -> Result<Self, PackIoError> {
+        Ok(bincode::deserialize(bytes)?)
+    }
+
     pub fn load_bincode(path: impl AsRef<Path>) -> Result<Self, PackIoError> {
         let file = File::open(path)?;
         let reader = BufReader::new(file);

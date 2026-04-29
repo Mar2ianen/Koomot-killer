@@ -3,7 +3,11 @@ use std::io::{BufReader, Cursor};
 use gpx::{read, Gpx};
 use thiserror::Error;
 
-use crate::api::{RouteAnalysisDto, RoutePointDto, RouteSegmentDto, RouteWarningDto};
+use crate::api::{
+    RouteAnalysisDto, RouteBoundsDto, RoutePartDto, RoutePointDto, RouteSegmentDto, RouteWarningDto,
+};
+
+const MAX_GPX_BYTES: usize = 50 * 1024 * 1024;
 
 #[derive(Debug, Error)]
 pub enum GpxParseError {
@@ -12,9 +16,19 @@ pub enum GpxParseError {
 
     #[error("GPX does not contain enough valid coordinates")]
     NotEnoughPoints,
+
+    #[error("GPX file is too large: {size} bytes, max supported size is {max} bytes")]
+    FileTooLarge { size: usize, max: usize },
 }
 
 pub fn parse_gpx(bytes: &[u8], fallback_name: &str) -> Result<RouteAnalysisDto, GpxParseError> {
+    if bytes.len() > MAX_GPX_BYTES {
+        return Err(GpxParseError::FileTooLarge {
+            size: bytes.len(),
+            max: MAX_GPX_BYTES,
+        });
+    }
+
     let cursor = Cursor::new(bytes);
     let reader = BufReader::new(cursor);
     let gpx = read(reader)?;
@@ -27,6 +41,8 @@ pub fn parse_gpx(bytes: &[u8], fallback_name: &str) -> Result<RouteAnalysisDto, 
 
     let stats = calculate_stats(&parsed.parts);
     let segments = build_segments(&parsed.parts);
+    let bounds = calculate_bounds(&parsed.points).ok_or(GpxParseError::NotEnoughPoints)?;
+    let parts = build_route_parts(&parsed.parts);
 
     Ok(RouteAnalysisDto {
         name: extract_route_name(&gpx, fallback_name),
@@ -36,6 +52,8 @@ pub fn parse_gpx(bytes: &[u8], fallback_name: &str) -> Result<RouteAnalysisDto, 
         elevation_loss_m: stats.elevation_loss_m,
         min_elevation_m: stats.min_elevation_m,
         max_elevation_m: stats.max_elevation_m,
+        bounds,
+        parts,
         segments,
         warnings: build_warnings(
             parsed.has_missing_elevation,
@@ -390,6 +408,55 @@ fn distance_meters(a: &RoutePointDto, b: &RoutePointDto) -> f64 {
     let h = (d_lat / 2.0).sin().powi(2) + lat1.cos() * lat2.cos() * (d_lon / 2.0).sin().powi(2);
 
     2.0 * EARTH_RADIUS_M * h.sqrt().atan2((1.0 - h).sqrt())
+}
+
+fn calculate_bounds(points: &[RoutePointDto]) -> Option<RouteBoundsDto> {
+    let first = points
+        .iter()
+        .find(|point| point.lat.is_finite() && point.lon.is_finite())?;
+
+    let mut min_lat = first.lat;
+    let mut min_lon = first.lon;
+    let mut max_lat = first.lat;
+    let mut max_lon = first.lon;
+
+    for point in points {
+        if !point.lat.is_finite() || !point.lon.is_finite() {
+            continue;
+        }
+
+        min_lat = min_lat.min(point.lat);
+        min_lon = min_lon.min(point.lon);
+        max_lat = max_lat.max(point.lat);
+        max_lon = max_lon.max(point.lon);
+    }
+
+    Some(RouteBoundsDto {
+        min_lat,
+        min_lon,
+        max_lat,
+        max_lon,
+    })
+}
+
+fn build_route_parts(parts: &[Vec<RoutePointDto>]) -> Vec<RoutePartDto> {
+    let mut cursor = 0usize;
+
+    parts
+        .iter()
+        .enumerate()
+        .map(|(index, part)| {
+            let start_index = cursor;
+            cursor += part.len();
+
+            RoutePartDto {
+                index: index as u32,
+                start_index: start_index as u32,
+                end_index: cursor as u32,
+                point_count: part.len() as u32,
+            }
+        })
+        .collect()
 }
 
 struct ParsedRoute {

@@ -6,6 +6,8 @@ import '../models/route_models.dart';
 import '../rust/api.dart' as rust_api;
 import 'route_analysis_mapper.dart';
 
+const _maxGpxBytes = 50 * 1024 * 1024;
+
 class GpxImportException implements Exception {
   const GpxImportException(this.message);
 
@@ -20,8 +22,9 @@ class GpxImporter {
 
   static Future<RouteAnalysis?> pickRoute() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.any,
+      type: FileType.custom,
       withData: true,
+      allowedExtensions: const ['gpx'],
     );
 
     if (result == null || result.files.isEmpty) {
@@ -32,6 +35,12 @@ class GpxImporter {
 
     if (!file.name.toLowerCase().endsWith('.gpx')) {
       throw const GpxImportException('Please select a valid .gpx file.');
+    }
+
+    if (file.size > _maxGpxBytes) {
+      throw const GpxImportException(
+        'Selected GPX file is too large. Maximum supported size is 50 MB.',
+      );
     }
 
     final bytes = file.bytes;

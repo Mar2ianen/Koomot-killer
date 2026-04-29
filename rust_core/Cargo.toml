@@ -10,7 +10,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [dependencies]
 flutter_rust_bridge = "=2.11.1"
 gpx = "0.10"
+kk_core = { path = "../crates/kk_core" }
 thiserror = "1"
+
 
 [profile.release]
 codegen-units = 1

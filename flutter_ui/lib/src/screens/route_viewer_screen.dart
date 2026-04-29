@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 
 import '../data/demo_route.dart';
+import '../models/osm_models.dart';
 import '../models/route_models.dart';
+import '../services/osm_pack_importer.dart';
 import '../services/rust_gpx_importer.dart';
 import '../widgets/elevation_profile_card.dart';
 import '../widgets/route_map.dart';
@@ -21,6 +23,7 @@ class _RouteViewerScreenState extends State<RouteViewerScreen> {
   final MapController _mapController = MapController();
   RouteAnalysis _route = demoRoute;
   bool _isImporting = false;
+  bool _isImportingOsm = false;
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +35,21 @@ class _RouteViewerScreenState extends State<RouteViewerScreen> {
           appBar: AppBar(
             title: const Text('Komoot Killer'),
             actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: OutlinedButton.icon(
+                  onPressed: _isImportingOsm ? null : _openOsm,
+                  icon: _isImportingOsm
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.map_rounded),
+                  label: Text(
+                    _isImportingOsm ? 'Parsing...' : 'Open OSM',
+                  ),
+                ),
+              ),
               Padding(
                 padding: const EdgeInsets.only(right: 12),
                 child: FilledButton.icon(
@@ -103,6 +121,93 @@ class _RouteViewerScreenState extends State<RouteViewerScreen> {
     } finally {
       if (mounted) {
         setState(() => _isImporting = false);
+      }
+    }
+  }
+
+  Future<void> _openOsm() async {
+    setState(() => _isImportingOsm = true);
+
+    try {
+      final summary = await OsmPackImporter.pickAndParse();
+
+      if (!mounted || summary == null) {
+        return;
+      }
+
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('OSM pack parsed'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Source: ${summary.source}'),
+                  const SizedBox(height: 8),
+                  Text('Road segments: ${summary.roadSegments}'),
+                  Text('Total length: ${summary.totalLengthKm.toStringAsFixed(1)} km'),
+                  Text('Pack: ${summary.humanPackSize}'),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Top surfaces',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  ...summary.bySurface.take(8).map(
+                        (stats) => Text(
+                          '${stats.className}: '
+                          '${stats.lengthKm.toStringAsFixed(1)} km, '
+                          '${stats.segments} segments',
+                        ),
+                      ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Top highways',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: 8),
+                  ...summary.byHighway.take(8).map(
+                        (stats) => Text(
+                          '${stats.className}: '
+                          '${stats.lengthKm.toStringAsFixed(1)} km, '
+                          '${stats.segments} segments',
+                        ),
+                      ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } on OsmImportException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message)),
+      );
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to parse OSM: $error')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isImportingOsm = false);
       }
     }
   }

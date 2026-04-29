@@ -27,10 +27,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double dco_decode_f_64(dynamic raw);
 
   @protected
+  List<OsmClassStatsDto> dco_decode_list_osm_class_stats_dto(dynamic raw);
+
+  @protected
   List<int> dco_decode_list_prim_u_8_loose(dynamic raw);
 
   @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
+
+  @protected
+  List<RoutePartDto> dco_decode_list_route_part_dto(dynamic raw);
 
   @protected
   List<RoutePointDto> dco_decode_list_route_point_dto(dynamic raw);
@@ -42,7 +48,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<RouteWarningDto> dco_decode_list_route_warning_dto(dynamic raw);
 
   @protected
+  OsmClassStatsDto dco_decode_osm_class_stats_dto(dynamic raw);
+
+  @protected
+  OsmImportReportDto dco_decode_osm_import_report_dto(dynamic raw);
+
+  @protected
+  OsmPackBuildDto dco_decode_osm_pack_build_dto(dynamic raw);
+
+  @protected
+  OsmPackStatsDto dco_decode_osm_pack_stats_dto(dynamic raw);
+
+  @protected
   RouteAnalysisDto dco_decode_route_analysis_dto(dynamic raw);
+
+  @protected
+  RouteBoundsDto dco_decode_route_bounds_dto(dynamic raw);
+
+  @protected
+  RoutePartDto dco_decode_route_part_dto(dynamic raw);
 
   @protected
   RoutePointDto dco_decode_route_point_dto(dynamic raw);
@@ -54,6 +78,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   RouteWarningDto dco_decode_route_warning_dto(dynamic raw);
 
   @protected
+  int dco_decode_u_32(dynamic raw);
+
+  @protected
   int dco_decode_u_8(dynamic raw);
 
   @protected
@@ -63,10 +90,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
+  List<OsmClassStatsDto> sse_decode_list_osm_class_stats_dto(
+      SseDeserializer deserializer);
+
+  @protected
   List<int> sse_decode_list_prim_u_8_loose(SseDeserializer deserializer);
 
   @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
+
+  @protected
+  List<RoutePartDto> sse_decode_list_route_part_dto(
+      SseDeserializer deserializer);
 
   @protected
   List<RoutePointDto> sse_decode_list_route_point_dto(
@@ -81,7 +116,26 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       SseDeserializer deserializer);
 
   @protected
+  OsmClassStatsDto sse_decode_osm_class_stats_dto(SseDeserializer deserializer);
+
+  @protected
+  OsmImportReportDto sse_decode_osm_import_report_dto(
+      SseDeserializer deserializer);
+
+  @protected
+  OsmPackBuildDto sse_decode_osm_pack_build_dto(SseDeserializer deserializer);
+
+  @protected
+  OsmPackStatsDto sse_decode_osm_pack_stats_dto(SseDeserializer deserializer);
+
+  @protected
   RouteAnalysisDto sse_decode_route_analysis_dto(SseDeserializer deserializer);
+
+  @protected
+  RouteBoundsDto sse_decode_route_bounds_dto(SseDeserializer deserializer);
+
+  @protected
+  RoutePartDto sse_decode_route_part_dto(SseDeserializer deserializer);
 
   @protected
   RoutePointDto sse_decode_route_point_dto(SseDeserializer deserializer);
@@ -91,6 +145,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RouteWarningDto sse_decode_route_warning_dto(SseDeserializer deserializer);
+
+  @protected
+  int sse_decode_u_32(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_8(SseDeserializer deserializer);
@@ -108,11 +165,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_osm_class_stats_dto(
+      List<OsmClassStatsDto> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_u_8_loose(List<int> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_u_8_strict(
       Uint8List self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_route_part_dto(
+      List<RoutePartDto> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_route_point_dto(
@@ -127,8 +192,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
       List<RouteWarningDto> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_osm_class_stats_dto(
+      OsmClassStatsDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_osm_import_report_dto(
+      OsmImportReportDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_osm_pack_build_dto(
+      OsmPackBuildDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_osm_pack_stats_dto(
+      OsmPackStatsDto self, SseSerializer serializer);
+
+  @protected
   void sse_encode_route_analysis_dto(
       RouteAnalysisDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_route_bounds_dto(
+      RouteBoundsDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_route_part_dto(RoutePartDto self, SseSerializer serializer);
 
   @protected
   void sse_encode_route_point_dto(RoutePointDto self, SseSerializer serializer);
@@ -140,6 +228,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_route_warning_dto(
       RouteWarningDto self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_u_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

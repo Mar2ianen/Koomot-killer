@@ -37,7 +37,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.11.1";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2139432152;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1030812327;
 
 // Section: executor
 
@@ -45,6 +45,74 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__build_osm_pack_bytes_from_pbf_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "build_osm_pack_bytes_from_pbf",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_bytes = <Vec<u8>>::sse_decode(&mut deserializer);
+            let api_source_name = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok =
+                        crate::api::build_osm_pack_bytes_from_pbf(api_bytes, api_source_name)?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__inspect_kkosm_bytes_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "inspect_kkosm_bytes",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_bytes = <Vec<u8>>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, String>((move || {
+                    let output_ok = crate::api::inspect_kkosm_bytes(api_bytes)?;
+                    Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__parse_gpx_bytes_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -97,6 +165,18 @@ impl SseDecode for f64 {
     }
 }
 
+impl SseDecode for Vec<crate::api::OsmClassStatsDto> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::OsmClassStatsDto>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -104,6 +184,18 @@ impl SseDecode for Vec<u8> {
         let mut ans_ = vec![];
         for idx_ in 0..len_ {
             ans_.push(<u8>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::RoutePartDto> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = vec![];
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::RoutePartDto>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -145,6 +237,74 @@ impl SseDecode for Vec<crate::api::RouteWarningDto> {
     }
 }
 
+impl SseDecode for crate::api::OsmClassStatsDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_className = <String>::sse_decode(deserializer);
+        let mut var_segments = <u32>::sse_decode(deserializer);
+        let mut var_lengthKm = <f64>::sse_decode(deserializer);
+        return crate::api::OsmClassStatsDto {
+            class_name: var_className,
+            segments: var_segments,
+            length_km: var_lengthKm,
+        };
+    }
+}
+
+impl SseDecode for crate::api::OsmImportReportDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_source = <String>::sse_decode(deserializer);
+        let mut var_highwayWays = <u32>::sse_decode(deserializer);
+        let mut var_roadSegments = <u32>::sse_decode(deserializer);
+        let mut var_skippedDegenerateSegments = <u32>::sse_decode(deserializer);
+        let mut var_skippedMissingNodes = <u32>::sse_decode(deserializer);
+        let mut var_totalLengthKm = <f64>::sse_decode(deserializer);
+        return crate::api::OsmImportReportDto {
+            source: var_source,
+            highway_ways: var_highwayWays,
+            road_segments: var_roadSegments,
+            skipped_degenerate_segments: var_skippedDegenerateSegments,
+            skipped_missing_nodes: var_skippedMissingNodes,
+            total_length_km: var_totalLengthKm,
+        };
+    }
+}
+
+impl SseDecode for crate::api::OsmPackBuildDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_packBytes = <Vec<u8>>::sse_decode(deserializer);
+        let mut var_stats = <crate::api::OsmPackStatsDto>::sse_decode(deserializer);
+        let mut var_report = <crate::api::OsmImportReportDto>::sse_decode(deserializer);
+        return crate::api::OsmPackBuildDto {
+            pack_bytes: var_packBytes,
+            stats: var_stats,
+            report: var_report,
+        };
+    }
+}
+
+impl SseDecode for crate::api::OsmPackStatsDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_source = <String>::sse_decode(deserializer);
+        let mut var_formatVersion = <u32>::sse_decode(deserializer);
+        let mut var_roadSegments = <u32>::sse_decode(deserializer);
+        let mut var_totalLengthKm = <f64>::sse_decode(deserializer);
+        let mut var_byHighway = <Vec<crate::api::OsmClassStatsDto>>::sse_decode(deserializer);
+        let mut var_bySurface = <Vec<crate::api::OsmClassStatsDto>>::sse_decode(deserializer);
+        return crate::api::OsmPackStatsDto {
+            source: var_source,
+            format_version: var_formatVersion,
+            road_segments: var_roadSegments,
+            total_length_km: var_totalLengthKm,
+            by_highway: var_byHighway,
+            by_surface: var_bySurface,
+        };
+    }
+}
+
 impl SseDecode for crate::api::RouteAnalysisDto {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -155,6 +315,8 @@ impl SseDecode for crate::api::RouteAnalysisDto {
         let mut var_elevationLossM = <f64>::sse_decode(deserializer);
         let mut var_minElevationM = <f64>::sse_decode(deserializer);
         let mut var_maxElevationM = <f64>::sse_decode(deserializer);
+        let mut var_bounds = <crate::api::RouteBoundsDto>::sse_decode(deserializer);
+        let mut var_parts = <Vec<crate::api::RoutePartDto>>::sse_decode(deserializer);
         let mut var_segments = <Vec<crate::api::RouteSegmentDto>>::sse_decode(deserializer);
         let mut var_warnings = <Vec<crate::api::RouteWarningDto>>::sse_decode(deserializer);
         return crate::api::RouteAnalysisDto {
@@ -165,8 +327,42 @@ impl SseDecode for crate::api::RouteAnalysisDto {
             elevation_loss_m: var_elevationLossM,
             min_elevation_m: var_minElevationM,
             max_elevation_m: var_maxElevationM,
+            bounds: var_bounds,
+            parts: var_parts,
             segments: var_segments,
             warnings: var_warnings,
+        };
+    }
+}
+
+impl SseDecode for crate::api::RouteBoundsDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_minLat = <f64>::sse_decode(deserializer);
+        let mut var_minLon = <f64>::sse_decode(deserializer);
+        let mut var_maxLat = <f64>::sse_decode(deserializer);
+        let mut var_maxLon = <f64>::sse_decode(deserializer);
+        return crate::api::RouteBoundsDto {
+            min_lat: var_minLat,
+            min_lon: var_minLon,
+            max_lat: var_maxLat,
+            max_lon: var_maxLon,
+        };
+    }
+}
+
+impl SseDecode for crate::api::RoutePartDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_index = <u32>::sse_decode(deserializer);
+        let mut var_startIndex = <u32>::sse_decode(deserializer);
+        let mut var_endIndex = <u32>::sse_decode(deserializer);
+        let mut var_pointCount = <u32>::sse_decode(deserializer);
+        return crate::api::RoutePartDto {
+            index: var_index,
+            start_index: var_startIndex,
+            end_index: var_endIndex,
+            point_count: var_pointCount,
         };
     }
 }
@@ -217,6 +413,13 @@ impl SseDecode for crate::api::RouteWarningDto {
     }
 }
 
+impl SseDecode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        deserializer.cursor.read_u32::<NativeEndian>().unwrap()
+    }
+}
+
 impl SseDecode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -247,7 +450,11 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__parse_gpx_bytes_impl(port, ptr, rust_vec_len, data_len),
+        1 => {
+            wire__crate__api__build_osm_pack_bytes_from_pbf_impl(port, ptr, rust_vec_len, data_len)
+        }
+        2 => wire__crate__api__inspect_kkosm_bytes_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__parse_gpx_bytes_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -267,6 +474,93 @@ fn pde_ffi_dispatcher_sync_impl(
 // Section: rust2dart
 
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::OsmClassStatsDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.class_name.into_into_dart().into_dart(),
+            self.segments.into_into_dart().into_dart(),
+            self.length_km.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::OsmClassStatsDto {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::OsmClassStatsDto>
+    for crate::api::OsmClassStatsDto
+{
+    fn into_into_dart(self) -> crate::api::OsmClassStatsDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::OsmImportReportDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.source.into_into_dart().into_dart(),
+            self.highway_ways.into_into_dart().into_dart(),
+            self.road_segments.into_into_dart().into_dart(),
+            self.skipped_degenerate_segments
+                .into_into_dart()
+                .into_dart(),
+            self.skipped_missing_nodes.into_into_dart().into_dart(),
+            self.total_length_km.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::OsmImportReportDto
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::OsmImportReportDto>
+    for crate::api::OsmImportReportDto
+{
+    fn into_into_dart(self) -> crate::api::OsmImportReportDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::OsmPackBuildDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.pack_bytes.into_into_dart().into_dart(),
+            self.stats.into_into_dart().into_dart(),
+            self.report.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::OsmPackBuildDto {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::OsmPackBuildDto>
+    for crate::api::OsmPackBuildDto
+{
+    fn into_into_dart(self) -> crate::api::OsmPackBuildDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::OsmPackStatsDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.source.into_into_dart().into_dart(),
+            self.format_version.into_into_dart().into_dart(),
+            self.road_segments.into_into_dart().into_dart(),
+            self.total_length_km.into_into_dart().into_dart(),
+            self.by_highway.into_into_dart().into_dart(),
+            self.by_surface.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::OsmPackStatsDto {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::OsmPackStatsDto>
+    for crate::api::OsmPackStatsDto
+{
+    fn into_into_dart(self) -> crate::api::OsmPackStatsDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::RouteAnalysisDto {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -277,6 +571,8 @@ impl flutter_rust_bridge::IntoDart for crate::api::RouteAnalysisDto {
             self.elevation_loss_m.into_into_dart().into_dart(),
             self.min_elevation_m.into_into_dart().into_dart(),
             self.max_elevation_m.into_into_dart().into_dart(),
+            self.bounds.into_into_dart().into_dart(),
+            self.parts.into_into_dart().into_dart(),
             self.segments.into_into_dart().into_dart(),
             self.warnings.into_into_dart().into_dart(),
         ]
@@ -288,6 +584,42 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::RouteAnalysisDto>
     for crate::api::RouteAnalysisDto
 {
     fn into_into_dart(self) -> crate::api::RouteAnalysisDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::RouteBoundsDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.min_lat.into_into_dart().into_dart(),
+            self.min_lon.into_into_dart().into_dart(),
+            self.max_lat.into_into_dart().into_dart(),
+            self.max_lon.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::RouteBoundsDto {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::RouteBoundsDto> for crate::api::RouteBoundsDto {
+    fn into_into_dart(self) -> crate::api::RouteBoundsDto {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::RoutePartDto {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.index.into_into_dart().into_dart(),
+            self.start_index.into_into_dart().into_dart(),
+            self.end_index.into_into_dart().into_dart(),
+            self.point_count.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::RoutePartDto {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::RoutePartDto> for crate::api::RoutePartDto {
+    fn into_into_dart(self) -> crate::api::RoutePartDto {
         self
     }
 }
@@ -363,12 +695,32 @@ impl SseEncode for f64 {
     }
 }
 
+impl SseEncode for Vec<crate::api::OsmClassStatsDto> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::OsmClassStatsDto>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<u8> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <u8>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::RoutePartDto> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::RoutePartDto>::sse_encode(item, serializer);
         }
     }
 }
@@ -403,6 +755,48 @@ impl SseEncode for Vec<crate::api::RouteWarningDto> {
     }
 }
 
+impl SseEncode for crate::api::OsmClassStatsDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.class_name, serializer);
+        <u32>::sse_encode(self.segments, serializer);
+        <f64>::sse_encode(self.length_km, serializer);
+    }
+}
+
+impl SseEncode for crate::api::OsmImportReportDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.source, serializer);
+        <u32>::sse_encode(self.highway_ways, serializer);
+        <u32>::sse_encode(self.road_segments, serializer);
+        <u32>::sse_encode(self.skipped_degenerate_segments, serializer);
+        <u32>::sse_encode(self.skipped_missing_nodes, serializer);
+        <f64>::sse_encode(self.total_length_km, serializer);
+    }
+}
+
+impl SseEncode for crate::api::OsmPackBuildDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<u8>>::sse_encode(self.pack_bytes, serializer);
+        <crate::api::OsmPackStatsDto>::sse_encode(self.stats, serializer);
+        <crate::api::OsmImportReportDto>::sse_encode(self.report, serializer);
+    }
+}
+
+impl SseEncode for crate::api::OsmPackStatsDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.source, serializer);
+        <u32>::sse_encode(self.format_version, serializer);
+        <u32>::sse_encode(self.road_segments, serializer);
+        <f64>::sse_encode(self.total_length_km, serializer);
+        <Vec<crate::api::OsmClassStatsDto>>::sse_encode(self.by_highway, serializer);
+        <Vec<crate::api::OsmClassStatsDto>>::sse_encode(self.by_surface, serializer);
+    }
+}
+
 impl SseEncode for crate::api::RouteAnalysisDto {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -413,8 +807,30 @@ impl SseEncode for crate::api::RouteAnalysisDto {
         <f64>::sse_encode(self.elevation_loss_m, serializer);
         <f64>::sse_encode(self.min_elevation_m, serializer);
         <f64>::sse_encode(self.max_elevation_m, serializer);
+        <crate::api::RouteBoundsDto>::sse_encode(self.bounds, serializer);
+        <Vec<crate::api::RoutePartDto>>::sse_encode(self.parts, serializer);
         <Vec<crate::api::RouteSegmentDto>>::sse_encode(self.segments, serializer);
         <Vec<crate::api::RouteWarningDto>>::sse_encode(self.warnings, serializer);
+    }
+}
+
+impl SseEncode for crate::api::RouteBoundsDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <f64>::sse_encode(self.min_lat, serializer);
+        <f64>::sse_encode(self.min_lon, serializer);
+        <f64>::sse_encode(self.max_lat, serializer);
+        <f64>::sse_encode(self.max_lon, serializer);
+    }
+}
+
+impl SseEncode for crate::api::RoutePartDto {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <u32>::sse_encode(self.index, serializer);
+        <u32>::sse_encode(self.start_index, serializer);
+        <u32>::sse_encode(self.end_index, serializer);
+        <u32>::sse_encode(self.point_count, serializer);
     }
 }
 
@@ -444,6 +860,13 @@ impl SseEncode for crate::api::RouteWarningDto {
         <String>::sse_encode(self.title, serializer);
         <String>::sse_encode(self.description, serializer);
         <String>::sse_encode(self.icon, serializer);
+    }
+}
+
+impl SseEncode for u32 {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        serializer.cursor.write_u32::<NativeEndian>(self).unwrap();
     }
 }
 
