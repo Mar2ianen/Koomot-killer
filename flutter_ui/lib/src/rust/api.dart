@@ -21,6 +21,14 @@ Future<OsmPackBuildDto> buildOsmPackBytesFromPbf(
 Future<OsmPackStatsDto> inspectKkosmBytes({required List<int> bytes}) =>
     RustLib.instance.api.crateApiInspectKkosmBytes(bytes: bytes);
 
+Future<OsmPackStatsDto> buildOsmPackStatsFromPbfPath(
+        {required String path, required String sourceName}) =>
+    RustLib.instance.api.crateApiBuildOsmPackStatsFromPbfPath(
+        path: path, sourceName: sourceName);
+
+Future<OsmPackStatsDto> inspectKkosmPath({required String path}) =>
+    RustLib.instance.api.crateApiInspectKkosmPath(path: path);
+
 class OsmClassStatsDto {
   final String className;
   final int segments;

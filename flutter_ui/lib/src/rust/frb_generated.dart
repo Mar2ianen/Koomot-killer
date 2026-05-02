@@ -68,7 +68,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.11.1';
 
   @override
-  int get rustContentHash => -1030812327;
+  int get rustContentHash => 1456397213;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -82,7 +82,12 @@ abstract class RustLibApi extends BaseApi {
   Future<OsmPackBuildDto> crateApiBuildOsmPackBytesFromPbf(
       {required List<int> bytes, required String sourceName});
 
+  Future<OsmPackStatsDto> crateApiBuildOsmPackStatsFromPbfPath(
+      {required String path, required String sourceName});
+
   Future<OsmPackStatsDto> crateApiInspectKkosmBytes({required List<int> bytes});
+
+  Future<OsmPackStatsDto> crateApiInspectKkosmPath({required String path});
 
   Future<RouteAnalysisDto> crateApiParseGpxBytes(
       {required List<int> bytes, required String fallbackName});
@@ -124,6 +129,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<OsmPackStatsDto> crateApiBuildOsmPackStatsFromPbfPath(
+      {required String path, required String sourceName}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(path, serializer);
+        sse_encode_String(sourceName, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 2, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_osm_pack_stats_dto,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiBuildOsmPackStatsFromPbfPathConstMeta,
+      argValues: [path, sourceName],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiBuildOsmPackStatsFromPbfPathConstMeta =>
+      const TaskConstMeta(
+        debugName: "build_osm_pack_stats_from_pbf_path",
+        argNames: ["path", "sourceName"],
+      );
+
+  @override
   Future<OsmPackStatsDto> crateApiInspectKkosmBytes(
       {required List<int> bytes}) {
     return handler.executeNormal(NormalTask(
@@ -131,7 +163,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_list_prim_u_8_loose(bytes, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 2, port: port_);
+            funcId: 3, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_osm_pack_stats_dto,
@@ -149,6 +181,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
+  Future<OsmPackStatsDto> crateApiInspectKkosmPath({required String path}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
+        final serializer = SseSerializer(generalizedFrbRustBinding);
+        sse_encode_String(path, serializer);
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 4, port: port_);
+      },
+      codec: SseCodec(
+        decodeSuccessData: sse_decode_osm_pack_stats_dto,
+        decodeErrorData: sse_decode_String,
+      ),
+      constMeta: kCrateApiInspectKkosmPathConstMeta,
+      argValues: [path],
+      apiImpl: this,
+    ));
+  }
+
+  TaskConstMeta get kCrateApiInspectKkosmPathConstMeta => const TaskConstMeta(
+        debugName: "inspect_kkosm_path",
+        argNames: ["path"],
+      );
+
+  @override
   Future<RouteAnalysisDto> crateApiParseGpxBytes(
       {required List<int> bytes, required String fallbackName}) {
     return handler.executeNormal(NormalTask(
@@ -157,7 +213,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         sse_encode_list_prim_u_8_loose(bytes, serializer);
         sse_encode_String(fallbackName, serializer);
         pdeCallFfi(generalizedFrbRustBinding, serializer,
-            funcId: 3, port: port_);
+            funcId: 5, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_route_analysis_dto,

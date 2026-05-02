@@ -317,7 +317,7 @@ class _MobileRouteViewer extends StatelessWidget {
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.22),
+                    color: Colors.black.withValues(alpha: 0.22),
                     blurRadius: 28,
                     offset: const Offset(0, -10),
                   ),

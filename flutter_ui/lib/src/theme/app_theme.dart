@@ -12,11 +12,11 @@ ThemeData buildAppTheme(Brightness brightness) {
     colorScheme: colorScheme,
     scaffoldBackgroundColor: colorScheme.surface,
     appBarTheme: const AppBarTheme(centerTitle: false),
-    cardTheme: CardThemeData(
+    cardTheme: const CardThemeData(
       elevation: 0,
       margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.all(Radius.circular(24)),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(

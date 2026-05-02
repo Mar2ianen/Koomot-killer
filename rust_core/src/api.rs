@@ -1,6 +1,8 @@
 use crate::gpx_parser::parse_gpx;
 use crate::osm_pack_bridge::{
-    build_osm_pack_bytes_from_pbf as build_osm_pack, inspect_kkosm_bytes as inspect_kkosm,
+    build_osm_pack_bytes_from_pbf as build_osm_pack,
+    build_osm_pack_stats_from_pbf_path as build_osm_pack_stats_from_path,
+    inspect_kkosm_bytes as inspect_kkosm, inspect_kkosm_path as inspect_kkosm_file,
 };
 
 #[derive(Debug, Clone)]
@@ -104,4 +106,15 @@ pub fn build_osm_pack_bytes_from_pbf(
 
 pub fn inspect_kkosm_bytes(bytes: Vec<u8>) -> Result<OsmPackStatsDto, String> {
     inspect_kkosm(bytes).map_err(|error| error.to_string())
+}
+
+pub fn build_osm_pack_stats_from_pbf_path(
+    path: String,
+    source_name: String,
+) -> Result<OsmPackStatsDto, String> {
+    build_osm_pack_stats_from_path(path, source_name).map_err(|error| error.to_string())
+}
+
+pub fn inspect_kkosm_path(path: String) -> Result<OsmPackStatsDto, String> {
+    inspect_kkosm_file(path).map_err(|error| error.to_string())
 }

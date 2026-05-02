@@ -40,7 +40,7 @@ class ElevationProfileCard extends StatelessWidget {
                 painter: _ElevationPainter(
                   elevations: route.points.map((point) => point.elevationM).toList(),
                   lineColor: colorScheme.primary,
-                  fillColor: colorScheme.primaryContainer.withOpacity(0.45),
+                  fillColor: colorScheme.primaryContainer.withValues(alpha: 0.45),
                   gridColor: colorScheme.outlineVariant,
                 ),
               ),

@@ -119,7 +119,7 @@ class _RouteMapState extends State<RouteMap> {
             Polyline(
               points: points,
               strokeWidth: 10,
-              color: colorScheme.primary.withOpacity(0.22),
+              color: colorScheme.primary.withValues(alpha: 0.22),
             ),
             Polyline(
               points: points,
@@ -160,7 +160,7 @@ class _RouteMapState extends State<RouteMap> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

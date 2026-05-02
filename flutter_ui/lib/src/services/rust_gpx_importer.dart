@@ -22,9 +22,8 @@ class GpxImporter {
 
   static Future<RouteAnalysis?> pickRoute() async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      withData: true,
-      allowedExtensions: const ['gpx'],
+      type: FileType.any,
+      withReadStream: true,
     );
 
     if (result == null || result.files.isEmpty) {
@@ -43,11 +42,7 @@ class GpxImporter {
       );
     }
 
-    final bytes = file.bytes;
-
-    if (bytes == null || bytes.isEmpty) {
-      throw const GpxImportException('Selected GPX file is empty or unavailable.');
-    }
+    final bytes = await _readPickedFileBytes(file);
 
     return parseBytes(bytes, fallbackName: file.name);
   }
@@ -67,4 +62,38 @@ class GpxImporter {
       throw GpxImportException('Failed to parse GPX in Rust: $error');
     }
   }
+}
+
+Future<Uint8List> _readPickedFileBytes(PlatformFile file) async {
+  final readStream = file.readStream;
+
+  if (readStream == null) {
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      throw const GpxImportException(
+          'Selected GPX file is empty or unavailable.');
+    }
+    return bytes;
+  }
+
+  final builder = BytesBuilder(copy: false);
+  var totalBytes = 0;
+
+  await for (final chunk in readStream) {
+    totalBytes += chunk.length;
+    if (totalBytes > _maxGpxBytes) {
+      throw const GpxImportException(
+        'Selected GPX file is too large. Maximum supported size is 50 MB.',
+      );
+    }
+    builder.add(chunk);
+  }
+
+  final bytes = builder.takeBytes();
+  if (bytes.isEmpty) {
+    throw const GpxImportException(
+        'Selected GPX file is empty or unavailable.');
+  }
+
+  return bytes;
 }

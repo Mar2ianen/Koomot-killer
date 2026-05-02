@@ -8,7 +8,7 @@ plugins {
 android {
     namespace = "io.github.mar2ianen.kk_flutter_ui_mvp"
     compileSdk = 34
-    buildToolsVersion = "37.0.0"
+    buildToolsVersion = "35.0.0"
     ndkVersion = "27.1.12297006"
 
     compileOptions {
